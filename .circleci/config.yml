@@ -44,19 +44,48 @@ jobs:
           name: Lint code
           command: |
             pylint --disable=R,C,W1203,W1202 app.py
-      - run:
-          name: Run App Locally
-          command: |
-            nohup python app.py &
-      - run:
-          name: Test App Locally
-          command: |
-            sleep 20
-            color=`curl http://localhost:8080/color`
-            echo "Current Colour is $color"
+    #  - run:
+    #      name: Run App Locally
+    #      command: |
+    #        nohup python app.py &
+    #  - run:
+    #      name: Test App Locally
+    #      command: |
+    #        sleep 20
+    #        color=`curl http://localhost:8080/color`
+    #        echo "Current Colour is $color"
       - save_cache:
           paths: [.]
           key: build-app
+  build-docker-image:
+    docker:
+    - image: cimg/base
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [build-app]
+      - run:
+          name: Update Environment Variables in Dockerfile
+          command: |
+            oldColor=`grep APP_COLOR Dockerfile`
+            newColor=`grep APP_COLOR app_properties.txt`
+            # Replace color from app_properties.txt in Dockerfile
+            sed -i "s/$oldColor/$newColor/" Dockerfile
+
+            oldVersion=`grep VERSION Dockerfile`
+            newVersion=`grep VERSION app_properties.txt`
+            # Replace version from app_properties.txt in Dockerfile
+            sed -i "s/$oldVersion/$newVersion/" Dockerfile
+      - run:
+          name: Build & Push Docker Image
+          command: |
+            echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+            tagPrefix=`grep TAG app_properties.txt | cut -d "=" -f2`
+            version=`grep VERSION app_properties.txt`
+            imagePath=`echo "${tagPrefix}:${version}`
+            docker build -t $imagePath .   
+            docker images
+            docker image push $imagePath     
 workflows:
   default:
     jobs:
