@@ -1,0 +1,49 @@
+version: 2.1
+orbs:
+  slack: circleci/slack@4.1
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      workFlowId:
+        type: string
+    steps:
+      - run:
+          name: Destroy backend environment
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name "udapeople-backend-<< parameters.workFlowId >>"
+      - run:
+          name: Destroy frontend environment
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-<< parameters.workFlowId >>"
+
+jobs:
+  build-app:
+    docker:
+    - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [build-app]
+      - run:
+          name: Setup Virtual Environment
+          command: |
+            python3 -m venv ~/.pyenv          
+      - run:
+          name: Install dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt         
+      - run:
+          name: Lint code
+          command: |
+            pylint --disable=R,C,W1203,W1202 app.py
+      - save_cache:
+          paths: [.]
+          key: build-app
+workflows:
+  default:
+    jobs:
+      - build-app
