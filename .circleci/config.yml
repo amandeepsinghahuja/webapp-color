@@ -80,6 +80,7 @@ jobs:
       - run:
           name: Build & Push Docker Image
           command: |
+            cat Dockerfile
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
             tagPrefix=`grep TAG app_properties.txt | cut -d "=" -f2`
             version=`grep VERSION app_properties.txt | cut -d "=" -f2`
