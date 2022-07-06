@@ -47,7 +47,7 @@ jobs:
       - run:
           name: Run App Locally
           command: |
-            python app.py
+            python app.py &
       - run:
           name: Test App Locally
           command: |
