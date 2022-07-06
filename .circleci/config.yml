@@ -81,7 +81,7 @@ jobs:
           command: |
             echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
             tagPrefix=`grep TAG app_properties.txt | cut -d "=" -f2`
-            version=`grep VERSION app_properties.txt`
+            version=`grep VERSION app_properties.txt | cut -d "=" -f2`
             imagePath=`echo "${tagPrefix}:${version}"`
             docker build -t $imagePath .   
             docker images
@@ -90,4 +90,5 @@ workflows:
   default:
     jobs:
       - build-app
-      - build-docker-image
+      - build-docker-image:
+          requires: [build-app]
