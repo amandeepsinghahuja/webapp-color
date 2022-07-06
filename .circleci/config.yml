@@ -90,3 +90,4 @@ workflows:
   default:
     jobs:
       - build-app
+      - build-docker-image
