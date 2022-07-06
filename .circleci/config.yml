@@ -68,12 +68,12 @@ jobs:
       - run:
           name: Update Environment Variables in Dockerfile
           command: |
-            oldColor=`grep APP_COLOR Dockerfile`
+            oldColor=`grep APP_COLOR Dockerfile | cut -d " " -f2`
             newColor=`grep APP_COLOR app_properties.txt`
             # Replace color from app_properties.txt in Dockerfile
             sed -i "s/$oldColor/$newColor/" Dockerfile
 
-            oldVersion=`grep VERSION Dockerfile`
+            oldVersion=`grep VERSION Dockerfile | cut -d " " -f2`
             newVersion=`grep VERSION app_properties.txt`
             # Replace version from app_properties.txt in Dockerfile
             sed -i "s/$oldVersion/$newVersion/" Dockerfile
