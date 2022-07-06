@@ -28,9 +28,10 @@ jobs:
       - restore_cache:
           keys: [build-app]
       - run:
-          name: Setup Virtual Environment
+          name: Setup and Activate Virtual Environment
           command: |
-            python3 -m venv ~/.pyenv          
+            python3 -m venv ~/.pyvenv
+            source ~/.pyvenv/bin/activate         
       - run:
           name: Install dependencies
           command: |
