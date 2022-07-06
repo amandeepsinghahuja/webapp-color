@@ -51,6 +51,7 @@ jobs:
       - run:
           name: Test App Locally
           command: |
+            sleep 20
             color=`curl http://localhost:8080/color`
             echo "Current Colour is $color"
       - save_cache:
