@@ -3,21 +3,16 @@ orbs:
   slack: circleci/slack@4.1
 commands:
   destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    description: Destroy eksctl kubernetes stack given a workflow ID.
     parameters:
-      workFlowId:
+      clusterName:
         type: string
     steps:
       - run:
-          name: Destroy backend environment
+          name: Destroy Cluster
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name "udapeople-backend-<< parameters.workFlowId >>"
-      - run:
-          name: Destroy frontend environment
-          when: on_fail
-          command: |
-            aws cloudformation delete-stack --stack-name "udapeople-frontend-<< parameters.workFlowId >>"
+            eksctl delete cluster --name=$cluster_name "<< parameters.clusterName >>"
 
 jobs:
   build-app:
@@ -57,9 +52,11 @@ jobs:
       - save_cache:
           paths: [.]
           key: build-app
+  
   build-docker-image:
     docker:
     - image: cimg/base:2022.06
+    working_directory: /tmp/workspace    
     steps:
       - checkout
       - setup_remote_docker
@@ -85,12 +82,96 @@ jobs:
             tagPrefix=`grep TAG app_properties.txt | cut -d "=" -f2`
             version=`grep VERSION app_properties.txt | cut -d "=" -f2`
             imagePath=`echo "${tagPrefix}:${version}"`
+            cat $imagePath > imagePath.txt
             docker build -t $imagePath .   
             docker images
-            docker image push $imagePath     
+            docker image push $imagePath
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - imagePath.txt
+
+  create-kubernetes-cluster:
+    docker:
+      - image: cimg/aws:2022.6.1
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            #Install eksctl#
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+      - run:
+          name: Retrieve Previous Cluster Name
+          command: |
+            echo $(aws eks list-clusters | python3 -c "import sys, json; print(json.load(sys.stdin)['clusters'][0])") > oldClusterName.txt
+            cat oldClusterName.txt
+      - run:
+          name: Create New Kubernetes Cluster
+          command: |
+            eksctl create cluster --name="capstone-${CIRCLE_WORKFLOW_ID:0:7}" --node-type t2.small
+      - destroy-environment:
+          clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}        
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - oldClusterName.txt
+
+  deploy-app-to-cluster:
+    docker:
+      - image: cimg/aws:2022.6.1
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            #Install eksctl if destroy environment is called#
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+
+            #Install kubectl#
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      - run:
+          name: Deploy App
+          command: |
+            aws eks update-kubeconfig --name "capstone-${CIRCLE_WORKFLOW_ID:0:7}"
+            export KUBECONFIG=/root/.kube/config
+            imagePath=`cat imagePath.txt`
+            #Create Deployment with Image pushed to DockerHub before #
+            kubectl create deployment mycolor --image $imagePath --replicas 2
+            kubectl rollout status deployment
+            kubectl expose deployment mycolor --name lbservice --type LoadBalancer --port 8080
+      - destroy-environment:
+          clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}
+
+  cleanup:
+    docker:
+      - image: cimg/aws:2022.6.1
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            #Install eksctl#
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+      - destroy-environment:
+          clusterName: `cat oldClusterName.txt`      
+
 workflows:
   default:
     jobs:
       - build-app
       - build-docker-image:
           requires: [build-app]
+      - create-kubernetes-cluster:
+          requires: [build-docker-image]
+      - deploy-app-to-cluster:
+          requires: [create-kubernetes-cluster]
+      - cleanup:
+          requires: [deploy-app-to-cluster] 
