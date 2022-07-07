@@ -108,7 +108,7 @@ jobs:
       - run:
           name: Retrieve Previous Cluster Name
           command: |
-            echo $(aws eks list-clusters --query "clusters[0]" --output text") > oldClusterName.txt
+            echo $(aws eks list-clusters --query "clusters[0]" --output text) > oldClusterName.txt
             cat oldClusterName.txt
       - run:
           name: Create New Kubernetes Cluster
