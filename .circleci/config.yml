@@ -163,8 +163,8 @@ jobs:
       - run:
           name: Delete Old Cluster
           command: |            
-          oldClusterName=`cat oldClusterName.txt`
-          eksctl delete cluster --name=$oldClusterName 
+            oldClusterName=`cat oldClusterName.txt`
+            eksctl delete cluster --name=$oldClusterName 
 
 workflows:
   default:
