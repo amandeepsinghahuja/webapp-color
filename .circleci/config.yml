@@ -82,7 +82,7 @@ jobs:
             tagPrefix=`grep TAG app_properties.txt | cut -d "=" -f2`
             version=`grep VERSION app_properties.txt | cut -d "=" -f2`
             imagePath=`echo "${tagPrefix}:${version}"`
-            cat $imagePath > imagePath.txt
+            echo $imagePath > imagePath.txt
             docker build -t $imagePath .   
             docker images
             docker image push $imagePath
