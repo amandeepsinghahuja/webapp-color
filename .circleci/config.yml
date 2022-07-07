@@ -101,6 +101,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            yum -y install tar gzip
             #Install eksctl#
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             sudo mv /tmp/eksctl /usr/local/bin
@@ -129,6 +130,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            yum -y install tar gzip
             #Install eksctl if destroy environment is called#
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             sudo mv /tmp/eksctl /usr/local/bin
