@@ -128,8 +128,6 @@ jobs:
     steps:
       - checkout
       - kubernetes/install-kubectl
-      - attach_workspace:
-          at: ~/     
       - run:
           name: Install dependencies
           command: |
@@ -137,6 +135,8 @@ jobs:
             #Install eksctl if destroy environment is called#
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             mv /tmp/eksctl /usr/local/bin
+      - attach_workspace:
+          at: /tmp/workspace            
       - run:
           name: Deploy App
           command: |
