@@ -129,7 +129,7 @@ jobs:
       - checkout
       - kubernetes/install-kubectl
       - attach_workspace:
-          at: ~      
+          at: ~/     
       - run:
           name: Install dependencies
           command: |
@@ -143,7 +143,7 @@ jobs:
             aws eks update-kubeconfig --name "capstone-${CIRCLE_WORKFLOW_ID:0:7}"
             export KUBECONFIG=/root/.kube/config
             pwd
-            ls
+            ls -l
             imagePath=`cat imagePath.txt`
             #Create Deployment with Image pushed to DockerHub before #
             kubectl create deployment mycolor --image $imagePath --replicas 2
