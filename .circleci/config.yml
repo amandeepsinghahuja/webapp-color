@@ -12,7 +12,7 @@ commands:
           name: Destroy Cluster
           when: on_fail
           command: |
-            eksctl delete cluster --name=$cluster_name "<< parameters.clusterName >>"
+            eksctl delete cluster --name="<< parameters.clusterName >>"
 
 jobs:
   build-app:
@@ -160,9 +160,11 @@ jobs:
             #Install eksctl#
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             sudo mv /tmp/eksctl /usr/local/bin
-      - destroy-environment:
-          clusterName: 
-          - run: `cat oldClusterName.txt` 
+      - run:
+          name: Delete Old Cluster
+          command: |            
+          oldClusterName=`cat oldClusterName.txt`
+          eksctl delete cluster --name=$oldClusterName 
 
 workflows:
   default:
