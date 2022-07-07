@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   slack: circleci/slack@4.1
-  aws-cli: circleci/aws-cli@3.1
+  kubernetes: circleci/kubernetes@1.3.0
 commands:
   destroy-environment:
     description: Destroy eksctl kubernetes stack given a workflow ID.
@@ -127,6 +127,7 @@ jobs:
     working_directory: /tmp/workspace
     steps:
       - checkout
+      - kubernetes/install-kubectl
       - run:
           name: Install dependencies
           command: |
@@ -134,13 +135,6 @@ jobs:
             #Install eksctl if destroy environment is called#
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             mv /tmp/eksctl /usr/local/bin
-
-            #Install kubectl#
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            chmod +x ./kubectl
-            mkdir -p ~/.local/bin
-            mv ./kubectl ~/.local/bin/kubectl
-            kubectl version
       - run:
           name: Deploy App
           command: |
