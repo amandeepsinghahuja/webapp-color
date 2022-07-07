@@ -108,7 +108,7 @@ jobs:
       - run:
           name: Retrieve Previous Cluster Name
           command: |
-            echo $(aws eks list-clusters | python3 -c "import sys, json; print(json.load(sys.stdin)['clusters'][0])") > oldClusterName.txt
+            echo $(aws eks list-clusters --query "clusters[0]" --output text") > oldClusterName.txt
             cat oldClusterName.txt
       - run:
           name: Create New Kubernetes Cluster
@@ -137,7 +137,7 @@ jobs:
 
             #Install kubectl#
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            chmod +x kubectl
+            chmod +x ./kubectl
             mkdir -p ~/.local/bin
             mv ./kubectl ~/.local/bin/kubectl
             kubectl version
