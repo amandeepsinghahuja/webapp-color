@@ -94,7 +94,7 @@ jobs:
 
   create-kubernetes-cluster:
     docker:
-    - image: cimg/base:2022.06
+    - image: amazon/aws-cli
     working_directory: /tmp/workspace
     steps:
       - checkout
@@ -122,7 +122,7 @@ jobs:
 
   deploy-app-to-cluster:
     docker:
-    - image: cimg/base:2022.06
+    - image: amazon/aws-cli
     working_directory: /tmp/workspace
     steps:
       - checkout
