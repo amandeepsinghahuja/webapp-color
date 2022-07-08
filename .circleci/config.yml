@@ -147,7 +147,8 @@ jobs:
             imagePath=`cat imagePath.txt`
             #Create Deployment with Image pushed to DockerHub before #
             kubectl create deployment mycolor --image $imagePath --replicas 2
-            kubectl rollout status deployment
+            kubectl rollout status deployment/mycolor
+            echo "Deploying LB Service"
             kubectl expose deployment mycolor --name lbservice --type LoadBalancer --port 8080
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}
