@@ -10,6 +10,13 @@ commands:
         type: string
     steps:
       - run:
+          name: Install Dependencies
+          when: on_fail
+          command: |
+            #Install eksctl#
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin    
+      - run:
           name: Destroy Cluster
           when: on_fail
           command: |
@@ -167,8 +174,9 @@ jobs:
           name: Test for Color
           command: |
             #EXTRACT HOSTNAME OF LOAD BALANCER FROM AWS#
-            BACKEND_HOST=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].CanonicalHostedZoneName" --output text`
-            BACKEND_URL_COLOR=`echo "http://$BACKEND_HOST:8080/color"`
+            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName`
+            BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB $LB_NAME" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            BACKEND_URL_COLOR=`echo "http://$BACKEND_IP:8080/color"`
             echo $BACKEND_URL_COLOR
             colorFromApp=`curl $BACKEND_URL_COLOR`
             colorFromProperties=`grep APP_COLOR app_properties.txt | cut -d "=" -f2`
@@ -181,8 +189,9 @@ jobs:
       - run:
           name: Test for Version
           command: |
-            BACKEND_HOST=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].CanonicalHostedZoneName" --output text`
-            BACKEND_URL_VERSION=`echo "http://$BACKEND_HOST:8080/version"`
+            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName`
+            BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB $LB_NAME" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            BACKEND_URL_VERSION=`echo "http://$BACKEND_IP:8080/version"`
             echo $BACKEND_URL_VERSION
             versionFromApp=`curl $BACKEND_URL_VERSION`
             versionFromProperties=`grep APP_VERSION app_properties.txt | cut -d "=" -f2`
