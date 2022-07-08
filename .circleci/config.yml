@@ -228,7 +228,7 @@ jobs:
             docker build -t $imagePath .   
             docker images
             docker image push $imagePath
-        - run:
+      - run:
           name: Deploy APP2
           command: |
             aws eks update-kubeconfig --name "capstone-${CIRCLE_WORKFLOW_ID:0:7}"
