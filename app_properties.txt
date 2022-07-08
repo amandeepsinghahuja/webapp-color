@@ -1,3 +1,7 @@
 APP_COLOR=blue
-VERSION=v2
-TAG=amandeepsinghahuja/testapp
+APP_VERSION=v1
+TAG=amandeepsinghahuja/webapp-color
+
+#BELOW ARE FOR ROLLING UPDATE
+APP2_COLOR=green
+APP2_VERSION=v2

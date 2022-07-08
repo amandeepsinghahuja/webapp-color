@@ -13,7 +13,7 @@ commands:
           name: Destroy Cluster
           when: on_fail
           command: |
-            eksctl delete cluster --name="<< parameters.clusterName >>"
+            eksctl delete cluster --name="<< parameters.clusterName >>"            
 
 jobs:
   build-app:
@@ -54,7 +54,7 @@ jobs:
           paths: [.]
           key: build-app
   
-  build-docker-image:
+  build-initial-image:
     docker:
     - image: cimg/base:2022.06
     working_directory: /tmp/workspace    
@@ -72,7 +72,7 @@ jobs:
             sed -i "s/$oldColor/$newColor/" Dockerfile
 
             oldVersion=`grep VERSION Dockerfile | cut -d " " -f2`
-            newVersion=`grep VERSION app_properties.txt`
+            newVersion=`grep APP_VERSION app_properties.txt`
             # Replace version from app_properties.txt in Dockerfile
             sed -i "s/$oldVersion/$newVersion/" Dockerfile
       - run:
@@ -153,6 +153,93 @@ jobs:
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}
 
+  smoke-tests:
+    docker:
+    - image: amazon/aws-cli
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            yum -y install curl tar gzip
+      - run:
+          name: Test for Color
+          command: |
+            #EXTRACT HOSTNAME OF LOAD BALANCER FROM AWS#
+            BACKEND_HOST=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].CanonicalHostedZoneName" --output text`
+            BACKEND_URL_COLOR=`echo "http://$BACKEND_HOST:8080/color"`
+            echo $BACKEND_URL_COLOR
+            colorFromApp=`curl $BACKEND_URL_COLOR`
+            colorFromProperties=`grep APP_COLOR app_properties.txt | cut -d "=" -f2`
+            if [ $colorFromApp == $colorFromProperties ]
+            then
+                return 0
+            else
+                return 1
+            fi
+      - run:
+          name: Test for Version
+          command: |
+            BACKEND_HOST=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].CanonicalHostedZoneName" --output text`
+            BACKEND_URL_VERSION=`echo "http://$BACKEND_HOST:8080/version"`
+            echo $BACKEND_URL_VERSION
+            versionFromApp=`curl $BACKEND_URL_VERSION`
+            versionFromProperties=`grep APP_VERSION app_properties.txt | cut -d "=" -f2`
+            if [ $versionFromApp == $versionFromProperties ]
+            then
+                return 0
+            else
+                return 1
+            fi
+      - destroy-environment:
+          clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}            
+
+  rolling-deployment:
+    docker:
+    - image: cimg/base:2022.06
+    working_directory: /tmp/workspace
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: /tmp/workspace            
+      - run:
+          name: Update APP2 Environment Variables in Dockerfile
+          command: |
+            oldColor=`grep APP_COLOR Dockerfile | cut -d " " -f2`
+            newColor=`grep APP2_COLOR app_properties.txt`
+            # Replace color from app_properties.txt in Dockerfile
+            sed -i "s/$oldColor/$newColor/" Dockerfile
+
+            oldVersion=`grep VERSION Dockerfile | cut -d " " -f2`
+            newVersion=`grep APP2_VERSION app_properties.txt`
+            # Replace version from app_properties.txt in Dockerfile
+            sed -i "s/$oldVersion/$newVersion/" Dockerfile
+      - run:
+          name: Build & Push APP2 Docker Image
+          command: |
+            cat Dockerfile
+            echo "$DOCKER_PASS" | docker login --username $DOCKER_USER --password-stdin
+            tagPrefix=`grep TAG app_properties.txt | cut -d "=" -f2`
+            version=`grep APP2_VERSION app_properties.txt | cut -d "=" -f2`
+            imagePath=`echo "${tagPrefix}:${version}"`
+            echo $imagePath > imagePath.txt
+            docker build -t $imagePath .   
+            docker images
+            docker image push $imagePath
+        - run:
+          name: Deploy APP2
+          command: |
+            aws eks update-kubeconfig --name "capstone-${CIRCLE_WORKFLOW_ID:0:7}"
+            export KUBECONFIG=/root/.kube/config
+            imagePath=`cat imagePath.txt`
+            #Update Deployment Image - Rolling Update Strategy by Default#            
+            kubectl set image deployment mycolor webapp-color=$imagePath
+            kubectl rollout status deployment/mycolor
+      - destroy-environment:
+          clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}            
+
   cleanup:
     docker:
     - image: cimg/base:2022.06
@@ -171,7 +258,12 @@ jobs:
           name: Delete Old Cluster
           command: |            
             oldClusterName=`cat oldClusterName.txt`
-            eksctl delete cluster --name=$oldClusterName 
+            if [ $oldClusterName != 'None']
+            then
+              eksctl delete cluster --name=$oldClusterName
+            else
+              echo "No old clusters found"
+            fi
 
 workflows:
   default:
@@ -183,5 +275,10 @@ workflows:
           requires: [build-docker-image]
       - deploy-app-to-cluster:
           requires: [create-kubernetes-cluster]
+      - smoke-tests:
+          requires: [deploy-app-to-cluster]
+      - rolling-deployment:
+          requires: [smoke-tests]
       - cleanup:
-          requires: [deploy-app-to-cluster] 
+          requires: [rolling-deployment]
+
