@@ -174,7 +174,7 @@ jobs:
           name: Test for Color
           command: |
             #EXTRACT HOSTNAME OF LOAD BALANCER FROM AWS#
-            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName"`
+            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
             BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB $LB_NAME" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
             BACKEND_URL_COLOR=`echo "http://$BACKEND_IP:8080/color"`
             echo $BACKEND_URL_COLOR
