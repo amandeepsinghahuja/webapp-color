@@ -195,7 +195,7 @@ jobs:
       - run:
           name: Test for Version
           command: |
-            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName"`
+            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
             echo "LB NAME: ${LB_NAME}"
             BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
             echo "BACKEND IP: ${BACKEND_IP}"
