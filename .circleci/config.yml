@@ -216,13 +216,21 @@ jobs:
 
   rolling-deployment:
     docker:
-    - image: cimg/base:2022.06
+    - image: amazon/aws-cli
     working_directory: /tmp/workspace
     steps:
       - checkout
       - setup_remote_docker
+      - kubernetes/install-kubectl
+      - run:
+          name: Install dependencies
+          command: |
+            yum -y install tar gzip
+            #Install eksctl if destroy environment is called#
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            mv /tmp/eksctl /usr/local/bin      
       - attach_workspace:
-          at: /tmp/workspace            
+          at: /tmp/workspace
       - run:
           name: Update APP2 Environment Variables in Dockerfile
           command: |
