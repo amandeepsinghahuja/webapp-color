@@ -179,8 +179,10 @@ jobs:
             BACKEND_URL_COLOR=`echo "http://$BACKEND_IP:8080/color"`
             echo $BACKEND_URL_COLOR
             colorFromApp=`curl $BACKEND_URL_COLOR`
+            echo ${colorFromApp}
+            echo ${colorFromProperties}
             colorFromProperties=`grep APP_COLOR app_properties.txt | cut -d "=" -f2`
-            if [ $colorFromApp == $colorFromProperties ]
+            if [ ${colorFromApp} == ${colorFromProperties} ]
             then
                 return 0
             else
