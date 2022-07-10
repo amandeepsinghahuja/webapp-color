@@ -157,6 +157,8 @@ jobs:
             kubectl rollout status deployment/mycolor
             echo "Deploying LB Service"
             kubectl expose deployment mycolor --name lbservice --type LoadBalancer --port 8080
+            #Sleep 6 minutes to allow instances to come up
+            sleep 360
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}
 
