@@ -175,9 +175,11 @@ jobs:
           command: |
             #EXTRACT HOSTNAME OF LOAD BALANCER FROM AWS#
             LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
+            echo "LB Name: ${LB_Name}"
             BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            echo "BACKEND IP: ${BACKEND_IP}"
             BACKEND_URL_COLOR=`echo "http://${BACKEND_IP}:8080/color"`
-            echo $BACKEND_URL_COLOR
+            echo "BACKEND URL: ${BACKEND_URL_COLOR}"
             colorFromApp=`curl ${BACKEND_URL_COLOR}`
             echo "COLOR FROM APP: ${colorFromApp}"
             colorFromProperties=`grep APP_COLOR app_properties.txt | cut -d "=" -f2`
@@ -192,7 +194,9 @@ jobs:
           name: Test for Version
           command: |
             LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName"`
+            echo "LB NAME: ${LB_NAME}"
             BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            echo "BACKEND IP: ${BACKEND_IP}"
             BACKEND_URL_VERSION=`echo "http://${BACKEND_IP}:8080/version"`
             echo $BACKEND_URL_VERSION
             versionFromApp=`curl ${BACKEND_URL_VERSION}`
