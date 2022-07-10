@@ -284,10 +284,10 @@ workflows:
           requires: [build-initial-image]
       - deploy-app-to-cluster:
           requires: [create-kubernetes-cluster]
-   #   - smoke-tests:
-   #       requires: [deploy-app-to-cluster]
-  #    - rolling-deployment:
-#          requires: [smoke-tests]
-   #   - cleanup:
-#          requires: [rolling-deployment]
+      - smoke-tests:
+          requires: [deploy-app-to-cluster]
+      - rolling-deployment:
+          requires: [smoke-tests]
+      - cleanup:
+          requires: [rolling-deployment]
 
