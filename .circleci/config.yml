@@ -194,9 +194,12 @@ jobs:
       - run:
           name: Test for Version
           command: |
-            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
-            echo "LB NAME: ${LB_NAME}"
-            BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            #LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
+            #echo "LB NAME: ${LB_NAME}"
+            #BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            aws eks update-kubeconfig --name "capstone-${CIRCLE_WORKFLOW_ID:0:7}"
+            export KUBECONFIG=/root/.kube/config
+            BACKEND_IP=`kubectl get svc lbservice -o jsonpath='{.status.loadBalancer.ingress[*].hostname}'`
             echo "BACKEND IP: ${BACKEND_IP}"
             BACKEND_URL_VERSION=`echo "http://${BACKEND_IP}:8080/version"`
             echo $BACKEND_URL_VERSION
@@ -272,7 +275,8 @@ jobs:
             kubectl rollout status deployment/mycolor
             sleep 120
             loadBalancerHost=`kubectl get svc lbservice -o jsonpath='{.status.loadBalancer.ingress[*].hostname}'`
-            Color of the web app changed to : curl http://${loadBalancerHost}:8080/color
+            echo "Color of the web app changed to : `curl http://${loadBalancerHost}:8080/color`"
+            echo "Version of the web app changed to : `curl http://${loadBalancerHost}:8080/version`"
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}            
 
