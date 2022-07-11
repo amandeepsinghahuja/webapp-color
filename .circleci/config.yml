@@ -239,9 +239,9 @@ jobs:
             sed -i "s/$oldColor/$newColor/" Dockerfile
 
             oldVersion=`grep VERSION Dockerfile | cut -d " " -f2`
-            newVersion=`grep APP2_VERSION app_properties.txt`
+            newVersion=`grep APP2_VERSION app_properties.txt | cut -d "=" -f2`
             # Replace version from app_properties.txt in Dockerfile
-            sed -i "s/$oldVersion/$newVersion/" Dockerfile
+            sed -i "s/$oldVersion/VERSION=$newVersion/" Dockerfile
 
             #REPLACE APP2 with APP
             sed -i 's/APP2_/APP_/g' Dockerfile
@@ -266,6 +266,7 @@ jobs:
             #Update Deployment Image - Rolling Update Strategy by Default#            
             kubectl set image deployment mycolor webapp-color=$imagePath
             kubectl rollout status deployment/mycolor
+            kubectl describe svc lbservice
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}            
 
