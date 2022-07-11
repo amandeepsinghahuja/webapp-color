@@ -163,6 +163,7 @@ jobs:
     working_directory: /tmp/workspace
     steps:
       - checkout
+      - kubernetes/install-kubectl      
       - run:
           name: Install dependencies
           command: |
@@ -171,9 +172,12 @@ jobs:
           name: Test for Color
           command: |
             #EXTRACT HOSTNAME OF LOAD BALANCER FROM AWS#
-            LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
-            echo "LB Name: ${LB_Name}"
-            BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            #LB_NAME=`aws elb describe-load-balancers --query "LoadBalancerDescriptions[0].LoadBalancerName" --output text`
+            #echo "LB Name: ${LB_Name}"
+            #BACKEND_IP=`aws ec2 describe-network-interfaces --filters Name=description,Values="ELB ${LB_NAME}" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].Association.PublicIp' --output text | head -1`
+            aws eks update-kubeconfig --name "capstone-${CIRCLE_WORKFLOW_ID:0:7}"
+            export KUBECONFIG=/root/.kube/config
+            BACKEND_IP=`kubectl get svc lbservice -o jsonpath='{.status.loadBalancer.ingress[*].hostname}'`
             echo "BACKEND IP: ${BACKEND_IP}"
             BACKEND_URL_COLOR=`echo "http://${BACKEND_IP}:8080/color"`
             echo "BACKEND URL: ${BACKEND_URL_COLOR}"
@@ -266,7 +270,9 @@ jobs:
             #Update Deployment Image - Rolling Update Strategy by Default#            
             kubectl set image deployment mycolor webapp-color=$imagePath
             kubectl rollout status deployment/mycolor
-            kubectl describe svc lbservice
+            sleep 120
+            loadBalancerHost=`kubectl get svc lbservice -o jsonpath='{.status.loadBalancer.ingress[*].hostname}'`
+            Color of the web app changed to : curl http://${loadBalancerHost}:8080/color
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}            
 
