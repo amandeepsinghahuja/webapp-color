@@ -1,6 +1,7 @@
 FROM python:3.6-alpine
 
-RUN pip install --no-deps flask
+# hadolint ignore=DL3013
+RUN pip install flask
 
 COPY . /opt/
 
