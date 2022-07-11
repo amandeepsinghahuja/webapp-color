@@ -19,7 +19,7 @@ color_codes = {
 SUPPORTED_COLORS = ",".join(color_codes.keys())
 
 # Get color from Environment variable
-COLOR_FROM_ENV = os.environ.get('APP_COLOR'
+COLOR_FROM_ENV = os.environ.get('APP_COLOR')
 VERSION_FROM_ENV = os.environ.get('VERSION') or "v1"
 # Generate a random color
 COLOR = random.choice(["red", "green", "blue", "blue2", "darkblue", "pink"])
