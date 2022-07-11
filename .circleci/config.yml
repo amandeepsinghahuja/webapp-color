@@ -49,6 +49,7 @@ jobs:
   build-initial-image:
     docker:
     - image: cimg/base:2022.06
+      user: root
     working_directory: /tmp/workspace    
     steps:
       - checkout
@@ -65,6 +66,15 @@ jobs:
             newVersion=`grep APP_VERSION app_properties.txt`
             # Replace version from app_properties.txt in Dockerfile
             sed -i "s/$oldVersion/$newVersion/" Dockerfile
+      - run:
+          name: Install dependencies
+          command: |
+            sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
+            sudo chmod +x /bin/hadolint         
+      - run:
+          name: Lint Dockerfile
+          command: |
+            hadolint Dockerfile            
       - run:
           name: Build & Push Docker Image
           command: |
@@ -103,7 +113,7 @@ jobs:
       - run:
           name: Create New Kubernetes Cluster
           command: |
-            eksctl create cluster --name="capstone-${CIRCLE_WORKFLOW_ID:0:7}" --node-type t2.small
+            eksctl create cluster --name="capstone-${CIRCLE_WORKFLOW_ID:0:7}" --node-type t2.small --nodes 2 --nodes-min 1 --nodes-max 3 --managed
       - destroy-environment:
           clusterName: capstone-${CIRCLE_WORKFLOW_ID:0:7}        
       - persist_to_workspace:
@@ -290,14 +300,14 @@ workflows:
       - build-app
       - build-initial-image:
           requires: [build-app]
-      - create-kubernetes-cluster:
-          requires: [build-initial-image]
-      - deploy-app-to-cluster:
-          requires: [create-kubernetes-cluster]
-      - smoke-tests:
-          requires: [deploy-app-to-cluster]
-      - rolling-deployment:
-          requires: [smoke-tests]
-      - cleanup:
-          requires: [rolling-deployment]
+      # - create-kubernetes-cluster:
+      #     requires: [build-initial-image]
+      # - deploy-app-to-cluster:
+      #     requires: [create-kubernetes-cluster]
+      # - smoke-tests:
+      #     requires: [deploy-app-to-cluster]
+      # - rolling-deployment:
+      #     requires: [smoke-tests]
+      # - cleanup:
+      #     requires: [rolling-deployment]
 
