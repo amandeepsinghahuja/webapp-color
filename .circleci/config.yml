@@ -247,6 +247,9 @@ jobs:
             newVersion=`grep APP2_VERSION app_properties.txt`
             # Replace version from app_properties.txt in Dockerfile
             sed -i "s/$oldVersion/$newVersion/" Dockerfile
+
+            #REPLACE APP2 with APP
+            sed -i 's/APP2_/APP_/g' Dockerfile
       - run:
           name: Build & Push APP2 Docker Image
           command: |
