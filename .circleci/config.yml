@@ -135,9 +135,11 @@ jobs:
             pwd
             ls -l
             imagePath=`cat imagePath.txt`
+            echo "IMAGE Path: $imagePath"
             #Create Deployment with Image pushed to DockerHub before #
             kubectl create deployment mycolor --image $imagePath --replicas 2
             kubectl rollout status deployment/mycolor
+            kubectl describe deployment mycolor
             echo "Deploying LB Service"
             kubectl expose deployment mycolor --name lbservice --type LoadBalancer --port 8080
             #Sleep 6 minutes to allow instances to come up
