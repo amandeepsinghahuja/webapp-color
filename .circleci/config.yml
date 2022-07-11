@@ -28,8 +28,6 @@ jobs:
     - image: cimg/python:3.10.5
     steps:
       - checkout
-      - restore_cache:
-          keys: [build-app]
       - run:
           name: Setup and Activate Virtual Environment
           command: |
@@ -47,20 +45,7 @@ jobs:
           name: Lint code
           command: |
             pylint --disable=R,C,W1203,W1202 app.py
-    #  - run:
-    #      name: Run App Locally
-    #      command: |
-    #        nohup python app.py &
-    #  - run:
-    #      name: Test App Locally
-    #      command: |
-    #        sleep 20
-    #        color=`curl http://localhost:8080/color`
-    #        echo "Current Colour is $color"
-      - save_cache:
-          paths: [.]
-          key: build-app
-  
+
   build-initial-image:
     docker:
     - image: cimg/base:2022.06
@@ -68,8 +53,6 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - restore_cache:
-          keys: [build-app]
       - run:
           name: Update Environment Variables in Dockerfile
           command: |
