@@ -298,16 +298,16 @@ workflows:
   default:
     jobs:
       - build-app
-      #- build-initial-image:
-      #    requires: [build-app]
-      # - create-kubernetes-cluster:
-      #     requires: [build-initial-image]
-      # - deploy-app-to-cluster:
-      #     requires: [create-kubernetes-cluster]
-      # - smoke-tests:
-      #     requires: [deploy-app-to-cluster]
-      # - rolling-deployment:
-      #     requires: [smoke-tests]
-      # - cleanup:
-      #     requires: [rolling-deployment]
+      - build-initial-image:
+         requires: [build-app]
+      - create-kubernetes-cluster:
+          requires: [build-initial-image]
+      - deploy-app-to-cluster:
+          requires: [create-kubernetes-cluster]
+      - smoke-tests:
+          requires: [deploy-app-to-cluster]
+      - rolling-deployment:
+          requires: [smoke-tests]
+      - cleanup:
+          requires: [rolling-deployment]
 
