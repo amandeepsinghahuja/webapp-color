@@ -226,7 +226,9 @@ jobs:
           name: Install dependencies
           command: |
             sudo apt-get install tar gzip
-            sudo apt-get install awscli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
             #Install eksctl if destroy environment is called#
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             sudo mv /tmp/eksctl /usr/local/bin      
