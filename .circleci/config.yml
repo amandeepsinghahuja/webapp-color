@@ -298,8 +298,8 @@ workflows:
   default:
     jobs:
       - build-app
-      - build-initial-image:
-          requires: [build-app]
+      #- build-initial-image:
+      #    requires: [build-app]
       # - create-kubernetes-cluster:
       #     requires: [build-initial-image]
       # - deploy-app-to-cluster:
